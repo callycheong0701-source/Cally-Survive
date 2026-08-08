@@ -2,11 +2,767 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f766e">
   <title>Deadline Planner</title>
+  <style>
+    :root {
+      --primary: #0f766e;
+      --primary-dark: #115e59;
+      --bg: #f3f7f6;
+      --card: #ffffff;
+      --text: #17201f;
+      --muted: #64748b;
+      --line: #dbe5e3;
+      --green: #15803d;
+      --amber: #b45309;
+      --red: #b91c1c;
+      --blue: #1d4ed8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: env(safe-area-inset-top) 16px calc(92px + env(safe-area-inset-bottom));
+    }
+
+    main {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 22px 20px;
+      border-radius: 20px;
+      margin: 8px 0 16px;
+    }
+
+    h1 { margin: 0; font-size: 27px; }
+    h2 { font-size: 19px; margin: 0 0 12px; }
+    h3 { margin: 0 0 5px; font-size: 17px; }
+    p { margin: 6px 0; }
+
+    .subtitle { opacity: .88; font-size: 14px; margin-top: 7px; }
+
+    .card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 17px;
+      margin-bottom: 14px;
+      box-shadow: 0 3px 12px rgba(15, 50, 47, .08);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .summary-box {
+      border-radius: 14px;
+      padding: 14px;
+      background: #edf8f6;
+    }
+
+    .summary-number {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-top: 5px;
+    }
+
+    .small { font-size: 13px; color: var(--muted); }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      margin: 14px 0 6px;
+    }
+
+    input, select, textarea {
+      display: block;
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 11px;
+      padding: 13px;
+      font: inherit;
+      color: var(--text);
+    }
+
+    textarea { min-height: 72px; resize: vertical; }
+
+    .two-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 11px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 15px;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      min-height: 47px;
+    }
+
+    .primary {
+      width: 100%;
+      margin-top: 18px;
+      background: var(--primary);
+      color: white;
+    }
+
+    .secondary { background: #e4efed; color: var(--primary-dark); }
+    .danger { background: #fee2e2; color: var(--red); }
+    .blue { background: #dbeafe; color: var(--blue); }
+
+    .task {
+      border-left: 5px solid var(--primary);
+      position: relative;
+    }
+
+    .task.at-risk { border-left-color: var(--red); }
+    .task.tight { border-left-color: var(--amber); }
+    .task.completed { border-left-color: var(--green); opacity: .76; }
+
+    .task-top {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .badge {
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 5px 9px;
+      white-space: nowrap;
+    }
+
+    .badge.good { background: #dcfce7; color: var(--green); }
+    .badge.tight { background: #fef3c7; color: var(--amber); }
+    .badge.risk { background: #fee2e2; color: var(--red); }
+    .badge.done { background: #dcfce7; color: var(--green); }
+
+    .countdown {
+      font-size: 18px;
+      font-weight: 800;
+      margin: 13px 0 7px;
+      color: var(--primary-dark);
+    }
+
+    .task.completed .countdown { color: var(--green); }
+
+    .progress-track {
+      height: 10px;
+      overflow: hidden;
+      background: #e6eeed;
+      border-radius: 99px;
+      margin: 10px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 99px;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 13px;
+      flex-wrap: wrap;
+    }
+
+    .task-actions button {
+      flex: 1;
+      padding: 10px;
+      min-height: 42px;
+      font-size: 14px;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 26px 12px;
+    }
+
+    .focus-name {
+      font-size: 17px;
+      font-weight: 800;
+      min-height: 24px;
+    }
+
+    .timer {
+      text-align: center;
+      font-size: 50px;
+      font-weight: 850;
+      letter-spacing: -2px;
+      margin: 13px 0;
+      color: var(--primary-dark);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+    }
+
+    .timer-controls button:last-child { grid-column: span 2; }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,.96);
+      border-top: 1px solid var(--line);
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      z-index: 5;
+    }
+
+    .bottom-nav button {
+      background: transparent;
+      color: var(--muted);
+      min-height: 44px;
+      padding: 8px 16px;
+    }
+
+    .bottom-nav button.active {
+      color: var(--primary-dark);
+      background: #e4efed;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .notice {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 12px;
+      padding: 11px;
+      color: #9a3412;
+      font-size: 14px;
+      margin-top: 11px;
+    }
+
+    @media (max-width: 390px) {
+      .two-columns, .summary { grid-template-columns: 1fr; }
+      .timer { font-size: 44px; }
+    }
+  </style>
 </head>
+
 <body>
-  <h1>My Deadline Planner</h1>
-  <p>Your personal MBA and work schedule app will appear here.</p>
+  <main>
+    <header>
+      <h1>Deadline Planner</h1>
+      <p class="subtitle">MBA, customer work, and installation tasks—one minute at a time.</p>
+    </header>
+
+    <section id="todayPage" class="page active">
+      <div class="card">
+        <h2>Today at a glance</h2>
+        <div class="summary">
+          <div class="summary-box">
+            <div class="small">Active tasks</div>
+            <div id="activeTaskCount" class="summary-number">0</div>
+          </div>
+          <div class="summary-box">
+            <div class="small">Work remaining</div>
+            <div id="totalMinutesRemaining" class="summary-number">0 min</div>
+          </div>
+        </div>
+        <div id="riskNotice"></div>
+      </div>
+
+      <div class="card">
+        <h2>Nearest deadlines</h2>
+        <div id="taskList"></div>
+      </div>
+    </section>
+
+    <section id="addPage" class="page">
+      <div class="card">
+        <h2 id="formTitle">Add a task</h2>
+
+        <form id="taskForm">
+          <input id="taskId" type="hidden">
+
+          <label for="title">Task name</label>
+          <input id="title" required placeholder="Example: MBA pricing assignment">
+
+          <div class="two-columns">
+            <div>
+              <label for="category">Category</label>
+              <select id="category">
+                <option>MBA</option>
+                <option>Customer</option>
+                <option>Machine installation</option>
+                <option>Personal</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="priority">Priority</label>
+              <select id="priority">
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="deadline">Deadline</label>
+          <input id="deadline" type="datetime-local" required>
+
+          <div class="two-columns">
+            <div>
+              <label for="estimatedMinutes">Estimated minutes</label>
+              <input id="estimatedMinutes" type="number" min="1" required placeholder="300">
+            </div>
+
+            <div>
+              <label for="completedMinutes">Minutes completed</label>
+              <input id="completedMinutes" type="number" min="0" value="0">
+            </div>
+          </div>
+
+          <label for="notes">Notes (optional)</label>
+          <textarea id="notes" placeholder="Example: Follow lecturer rubric and use APA references"></textarea>
+
+          <button class="primary" type="submit">Save task</button>
+          <button id="cancelEdit" class="secondary" type="button" style="width:100%; margin-top:9px; display:none;">Cancel editing</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="focusPage" class="page">
+      <div class="card">
+        <h2>Focus session</h2>
+        <p id="focusTaskName" class="focus-name">Choose a task from Today first.</p>
+        <p id="focusTaskRemaining" class="small"></p>
+        <div id="focusTimer" class="timer">00:00:00</div>
+
+        <div class="timer-controls">
+          <button id="startFocus" class="primary" type="button" style="margin-top:0;">Start</button>
+          <button id="pauseFocus" class="secondary" type="button">Pause</button>
+          <button id="finishFocus" class="blue" type="button">Finish & save time</button>
+        </div>
+
+        <div class="notice">
+          Your iPhone may pause the visible timer while locked. This app saves the true start time and recalculates your actual work time when you return.
+        </div>
+      </div>
+    </section>
+
+    <section id="settingsPage" class="page">
+      <div class="card">
+        <h2>Your private data</h2>
+        <p class="small">Tasks are saved only in this browser on this iPhone. Export a backup after important updates.</p>
+        <button id="exportData" class="primary" type="button">Export backup</button>
+
+        <label for="importData">Import a backup</label>
+        <input id="importData" type="file" accept="application/json">
+      </div>
+
+      <div class="card">
+        <h2>Danger zone</h2>
+        <p class="small">This permanently deletes all planner tasks from this iPhone.</p>
+        <button id="clearData" class="danger" type="button" style="width:100%;">Delete all tasks</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="active" data-page="todayPage">Today</button>
+    <button data-page="addPage">Add task</button>
+    <button data-page="focusPage">Focus</button>
+    <button data-page="settingsPage">Settings</button>
+  </nav>
+
+  <script>
+    const STORAGE_KEY = "deadlinePlannerTasksV1";
+    const FOCUS_KEY = "deadlinePlannerFocusV1";
+
+    let tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    let activeFocus = JSON.parse(localStorage.getItem(FOCUS_KEY) || "null");
+
+    const byId = (id) => document.getElementById(id);
+
+    function saveTasks() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+
+    function saveFocus() {
+      localStorage.setItem(FOCUS_KEY, JSON.stringify(activeFocus));
+    }
+
+    function formatMinutes(minutes) {
+      const total = Math.max(0, Math.round(minutes));
+      const hours = Math.floor(total / 60);
+      const mins = total % 60;
+      return hours ? `${hours}h ${mins}m` : `${mins} min`;
+    }
+
+    function formatCountdown(milliseconds) {
+      if (milliseconds <= 0) return "Overdue";
+      const seconds = Math.floor(milliseconds / 1000);
+      const days = Math.floor(seconds / 86400);
+      const hours = Math.floor((seconds % 86400) / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+
+      if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+      return `${hours}h ${minutes}m ${secs}s`;
+    }
+
+    function taskRemaining(task) {
+      return Math.max(0, Number(task.estimatedMinutes) - Number(task.completedMinutes));
+    }
+
+    function statusFor(task) {
+      const remaining = taskRemaining(task);
+      if (remaining === 0) return { text: "Completed", className: "done", taskClass: "completed" };
+
+      const hoursLeft = (new Date(task.deadline) - new Date()) / 3600000;
+      const estimatedHours = remaining / 60;
+
+      if (hoursLeft <= 0 || estimatedHours > hoursLeft) {
+        return { text: "At risk", className: "risk", taskClass: "at-risk" };
+      }
+      if (hoursLeft < 24 || estimatedHours > hoursLeft * 0.5) {
+        return { text: "Tight", className: "tight", taskClass: "tight" };
+      }
+      return { text: "On track", className: "good", taskClass: "" };
+    }
+
+    function renderTasks() {
+      const list = byId("taskList");
+      const activeTasks = tasks.filter(task => taskRemaining(task) > 0);
+      const sortedTasks = [...tasks].sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+
+      byId("activeTaskCount").textContent = activeTasks.length;
+      byId("totalMinutesRemaining").textContent =
+        formatMinutes(activeTasks.reduce((sum, task) => sum + taskRemaining(task), 0));
+
+      const riskTasks = activeTasks.filter(task => statusFor(task).className === "risk");
+      byId("riskNotice").innerHTML = riskTasks.length
+        ? `<div class="notice"><strong>${riskTasks.length} task${riskTasks.length > 1 ? "s are" : " is"} at risk.</strong> Start with the nearest deadline or reduce its scope.</div>`
+        : `<p class="small" style="margin-top:12px;">No overdue or at-risk task detected right now.</p>`;
+
+      if (!sortedTasks.length) {
+        list.innerHTML = `<div class="empty">No tasks yet. Tap <strong>Add task</strong> below to enter your MBA assignment or work commitment.</div>`;
+        return;
+      }
+
+      list.innerHTML = sortedTasks.map(task => {
+        const status = statusFor(task);
+        const remaining = taskRemaining(task);
+        const progress = Math.min(100, Math.round((task.completedMinutes / task.estimatedMinutes) * 100));
+        const deadlineText = new Date(task.deadline).toLocaleString([], {
+          weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit"
+        });
+
+        return `
+          <article class="card task ${status.taskClass}">
+            <div class="task-top">
+              <div>
+                <h3>${escapeHtml(task.title)}</h3>
+                <p class="small">${escapeHtml(task.category)} · ${escapeHtml(task.priority)} priority</p>
+              </div>
+              <span class="badge ${status.className}">${status.text}</span>
+            </div>
+            <div class="countdown" data-deadline="${task.deadline}" data-complete="${remaining === 0}">
+              ${remaining === 0 ? "Completed" : formatCountdown(new Date(task.deadline) - new Date())}
+            </div>
+            <p class="small">Due: ${deadlineText}</p>
+            <div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>
+            <p class="small">${formatMinutes(task.completedMinutes)} completed · <strong>${formatMinutes(remaining)} remaining</strong></p>
+            ${task.notes ? `<p class="small">Note: ${escapeHtml(task.notes)}</p>` : ""}
+            <div class="task-actions">
+              <button class="blue" onclick="chooseFocus('${task.id}')">Focus</button>
+              <button class="secondary" onclick="editTask('${task.id}')">Edit</button>
+              <button class="danger" onclick="deleteTask('${task.id}')">Delete</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function updateCountdowns() {
+      document.querySelectorAll("[data-deadline]").forEach(element => {
+        if (element.dataset.complete === "true") return;
+        element.textContent = formatCountdown(new Date(element.dataset.deadline) - new Date());
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text || "";
+      return div.innerHTML;
+    }
+
+    function resetForm() {
+      byId("taskForm").reset();
+      byId("taskId").value = "";
+      byId("completedMinutes").value = 0;
+      byId("formTitle").textContent = "Add a task";
+      byId("cancelEdit").style.display = "none";
+    }
+
+    function switchPage(pageId) {
+      document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+      document.querySelectorAll(".bottom-nav button").forEach(button => button.classList.remove("active"));
+      byId(pageId).classList.add("active");
+      document.querySelector(`[data-page="${pageId}"]`).classList.add("active");
+      if (pageId === "todayPage") renderTasks();
+      if (pageId === "focusPage") renderFocus();
+    }
+
+    window.chooseFocus = function(taskId) {
+      const task = tasks.find(item => item.id === taskId);
+      if (!task || taskRemaining(task) === 0) {
+        alert("Choose an incomplete task.");
+        return;
+      }
+
+      if (activeFocus && activeFocus.isRunning) {
+        alert("Please pause or finish your current focus session first.");
+        return;
+      }
+
+      activeFocus = {
+        taskId,
+        accumulatedSeconds: activeFocus?.taskId === taskId ? activeFocus.accumulatedSeconds : 0,
+        startedAt: null,
+        isRunning: false
+      };
+      saveFocus();
+      switchPage("focusPage");
+    };
+
+    window.editTask = function(taskId) {
+      const task = tasks.find(item => item.id === taskId);
+      if (!task) return;
+
+      byId("taskId").value = task.id;
+      byId("title").value = task.title;
+      byId("category").value = task.category;
+      byId("priority").value = task.priority;
+      byId("deadline").value = task.deadline.slice(0, 16);
+      byId("estimatedMinutes").value = task.estimatedMinutes;
+      byId("completedMinutes").value = task.completedMinutes;
+      byId("notes").value = task.notes || "";
+      byId("formTitle").textContent = "Edit task";
+      byId("cancelEdit").style.display = "block";
+      switchPage("addPage");
+    };
+
+    window.deleteTask = function(taskId) {
+      const task = tasks.find(item => item.id === taskId);
+      if (!task || !confirm(`Delete "${task.title}"?`)) return;
+
+      if (activeFocus?.taskId === taskId) {
+        activeFocus = null;
+        saveFocus();
+      }
+
+      tasks = tasks.filter(item => item.id !== taskId);
+      saveTasks();
+      renderTasks();
+    };
+
+    byId("taskForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      const id = byId("taskId").value;
+      const task = {
+        id: id || crypto.randomUUID(),
+        title: byId("title").value.trim(),
+        category: byId("category").value,
+        priority: byId("priority").value,
+        deadline: new Date(byId("deadline").value).toISOString(),
+        estimatedMinutes: Number(byId("estimatedMinutes").value),
+        completedMinutes: Number(byId("completedMinutes").value || 0),
+        notes: byId("notes").value.trim()
+      };
+
+      if (task.completedMinutes > task.estimatedMinutes) {
+        task.completedMinutes = task.estimatedMinutes;
+      }
+
+      if (id) {
+        tasks = tasks.map(item => item.id === id ? task : item);
+      } else {
+        tasks.push(task);
+      }
+
+      saveTasks();
+      resetForm();
+      switchPage("todayPage");
+    });
+
+    byId("cancelEdit").addEventListener("click", () => {
+      resetForm();
+      switchPage("todayPage");
+    });
+
+    function elapsedFocusSeconds() {
+      if (!activeFocus) return 0;
+      let seconds = activeFocus.accumulatedSeconds || 0;
+      if (activeFocus.isRunning && activeFocus.startedAt) {
+        seconds += Math.floor((Date.now() - new Date(activeFocus.startedAt).getTime()) / 1000);
+      }
+      return Math.max(0, seconds);
+    }
+
+    function renderFocus() {
+      const task = activeFocus ? tasks.find(item => item.id === activeFocus.taskId) : null;
+
+      if (!task) {
+        byId("focusTaskName").textContent = "Choose a task from Today first.";
+        byId("focusTaskRemaining").textContent = "";
+        byId("focusTimer").textContent = "00:00:00";
+        return;
+      }
+
+      byId("focusTaskName").textContent = task.title;
+      byId("focusTaskRemaining").textContent = `${formatMinutes(taskRemaining(task))} estimated work remaining`;
+      updateFocusDisplay();
+    }
+
+    function updateFocusDisplay() {
+      if (!activeFocus) return;
+      const seconds = elapsedFocusSeconds();
+      const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
+      const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+      const s = String(seconds % 60).padStart(2, "0");
+      byId("focusTimer").textContent = `${h}:${m}:${s}`;
+    }
+
+    byId("startFocus").addEventListener("click", () => {
+      if (!activeFocus) {
+        alert("Choose a task from Today first.");
+        return;
+      }
+      if (!activeFocus.isRunning) {
+        activeFocus.startedAt = new Date().toISOString();
+        activeFocus.isRunning = true;
+        saveFocus();
+      }
+    });
+
+    byId("pauseFocus").addEventListener("click", () => {
+      if (!activeFocus?.isRunning) return;
+      activeFocus.accumulatedSeconds = elapsedFocusSeconds();
+      activeFocus.startedAt = null;
+      activeFocus.isRunning = false;
+      saveFocus();
+      updateFocusDisplay();
+    });
+
+    byId("finishFocus").addEventListener("click", () => {
+      if (!activeFocus) {
+        alert("There is no current focus session.");
+        return;
+      }
+
+      const seconds = elapsedFocusSeconds();
+      const minutes = Math.max(1, Math.round(seconds / 60));
+      const task = tasks.find(item => item.id === activeFocus.taskId);
+
+      if (!task) {
+        activeFocus = null;
+        saveFocus();
+        return;
+      }
+
+      task.completedMinutes = Math.min(
+        Number(task.estimatedMinutes),
+        Number(task.completedMinutes) + minutes
+      );
+
+      saveTasks();
+      activeFocus = null;
+      saveFocus();
+      renderFocus();
+      renderTasks();
+      alert(`${minutes} minutes saved to "${task.title}".`);
+      switchPage("todayPage");
+    });
+
+    byId("exportData").addEventListener("click", () => {
+      const backup = {
+        exportedAt: new Date().toISOString(),
+        tasks
+      };
+      const file = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `deadline-planner-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    byId("importData").addEventListener("change", event => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const backup = JSON.parse(reader.result);
+          if (!Array.isArray(backup.tasks)) throw new Error();
+          if (!confirm(`Replace your current ${tasks.length} task(s) with ${backup.tasks.length} imported task(s)?`)) return;
+          tasks = backup.tasks;
+          saveTasks();
+          renderTasks();
+          alert("Backup imported successfully.");
+        } catch {
+          alert("That file is not a valid Deadline Planner backup.");
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    byId("clearData").addEventListener("click", () => {
+      if (!confirm("Delete every task permanently from this iPhone?")) return;
+      tasks = [];
+      activeFocus = null;
+      saveTasks();
+      saveFocus();
+      renderTasks();
+      renderFocus();
+    });
+
+    document.querySelectorAll(".bottom-nav button").forEach(button => {
+      button.addEventListener("click", () => switchPage(button.dataset.page));
+    });
+
+    renderTasks();
+    renderFocus();
+    setInterval(() => {
+      updateCountdowns();
+      updateFocusDisplay();
+    }, 1000);
+  </script>
 </body>
 </html>
